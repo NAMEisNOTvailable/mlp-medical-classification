@@ -1,33 +1,53 @@
-# Deep Learning MLP - Medical Classification
+# Medical MLP Classification
 
-Machine learning coursework project for binary medical classification using multilayer perceptron models.
+Binary medical classification project using multilayer perceptron models, imbalance handling, and metric-aware evaluation on the Pima diabetes prediction task.
 
-## Portfolio Summary
+## Project Snapshot
 
-This project explores the Pima diabetes prediction task with a focus on preprocessing, imbalanced classification, model depth, and evaluation quality.
+| Area | Summary |
+| --- | --- |
+| Task | Diabetes outcome classification |
+| Model family | Multilayer perceptrons with different depths |
+| Imbalance method | SMOTE |
+| Best reported result | AUC-ROC 0.8105 for the best SMOTE model |
+| Main artefact | [`notebooks/medical_mlp_classification.ipynb`](notebooks/medical_mlp_classification.ipynb) |
 
-Key work:
+## What This Demonstrates
 
-- Built MLP classification pipelines for diabetes prediction.
-- Compared models with **1, 3, 7, and 12 hidden layers**.
-- Tested training with and without **SMOTE** for class imbalance handling.
-- Used mean imputation, `StandardScaler`, Adam optimisation, and early stopping.
-- Evaluated models with AUC-ROC, accuracy, precision, recall, F1, and confusion matrices.
-- Found that the best SMOTE model reached **AUC-ROC 0.8105**, while deeper 12-layer models showed overfitting risk.
+- Built a preprocessing and classification workflow for tabular medical data.
+- Compared MLP models with 1, 3, 7, and 12 hidden layers.
+- Applied imputation, standardisation, Adam optimisation, early stopping, and SMOTE.
+- Evaluated models using AUC-ROC, accuracy, precision, recall, F1, and confusion matrices.
+- Treated false negatives and class imbalance as evaluation risks instead of relying on accuracy alone.
 
-## Skills Demonstrated
+## Evaluation Focus
 
-- Python machine learning workflow
-- TensorFlow/Keras or scikit-learn style experimentation
-- Imbalanced classification and SMOTE
-- Model comparison and overfitting analysis
-- Medical classification evaluation metrics
+Medical classification should be reviewed through risk-aware metrics:
+
+| Metric | Why It Matters |
+| --- | --- |
+| Recall | Helps identify missed positive cases |
+| Precision | Helps understand false-alarm cost |
+| F1 | Balances precision and recall |
+| AUC-ROC | Measures ranking quality across thresholds |
+| Confusion matrix | Shows error types directly |
+
+## Repository Structure
+
+```text
+notebooks/   Main experiment notebook
+README.md    Portfolio overview and result summary
+```
+
+## Skills Shown
+
+- Tabular machine-learning workflow
+- Imbalanced classification
+- MLP architecture comparison
+- SMOTE and preprocessing pipelines
+- Metric-aware model evaluation
 - Clear experiment documentation
-
-## Why This Matters
-
-For health-related classification tasks, accuracy alone can be misleading. This project emphasises recall, precision, AUC-ROC, and false-negative awareness so the model is assessed through a risk-aware lens rather than a single headline score.
 
 ## Status
 
-Academic portfolio project. README added to make the repository easier for recruiters and reviewers to understand quickly.
+Academic portfolio project. The repository is organised so reviewers can understand the modelling objective and evaluation approach before opening the notebook.

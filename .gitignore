@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# Generated model artefacts
+*.pt
+*.pth
+*.h5
+*.keras
+*.pkl
+*.joblib
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
