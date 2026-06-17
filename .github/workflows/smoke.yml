@@ -29,24 +29,8 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
-      - name: Run notebook smoke checks
-        run: |
-          python - <<'PY'
-          import importlib
-          import json
-          from pathlib import Path
+      - name: Run unit tests
+        run: python -m pytest -q
 
-          for module_name in ("tensorflow", "numpy", "pandas", "matplotlib", "sklearn", "imblearn"):
-              importlib.import_module(module_name)
-
-          notebooks = sorted(Path("notebooks").glob("*.ipynb"))
-          if not notebooks:
-              raise SystemExit("No notebooks found under notebooks/")
-
-          for notebook in notebooks:
-              data = json.loads(notebook.read_text(encoding="utf-8"))
-              if "cells" not in data or "nbformat" not in data:
-                  raise SystemExit(f"{notebook} is not a valid notebook JSON document")
-
-          print(f"Validated {len(notebooks)} notebook(s).")
-          PY
+      - name: Run experiment check
+        run: python scripts/run_experiment.py --quick --no-plots --output-dir results/smoke

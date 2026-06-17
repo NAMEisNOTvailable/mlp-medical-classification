@@ -1,7 +1,12 @@
 # Notebooks
 
-This folder contains the main medical MLP classification notebook.
+This folder contains the review notebook for the medical MLP classification
+experiment.
 
-Open `medical_mlp_classification.ipynb` to review preprocessing, imbalance handling, model comparison, and evaluation metrics.
+The reusable experiment logic lives in `src/medical_mlp_classification/`.
+Run `python scripts/run_experiment.py` from the repository root to regenerate
+the metrics and plots used by the notebook.
 
-Use Python 3.10 and install the project dependencies from the repository root with `pip install -r requirements.txt` before running the notebook.
+Use `requirements.txt` for core experiment reproduction. Install
+`requirements-notebook.txt` only when opening or editing the notebook
+interactively.

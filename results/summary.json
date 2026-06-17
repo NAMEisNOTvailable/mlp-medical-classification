@@ -1,0 +1,68 @@
+{
+  "dataset": {
+    "rows": 768,
+    "features": 8,
+    "raw_label_counts": {
+      "-1": 268,
+      "1": 500
+    },
+    "target_counts": {
+      "0": 500,
+      "1": 268
+    },
+    "positive_label_mapping": "raw LIBSVM label -1 -> diabetes_positive=1",
+    "data_url": "https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/diabetes_scale"
+  },
+  "config": {
+    "data_dir": "data",
+    "output_dir": "results",
+    "layers": [
+      1,
+      3,
+      7,
+      12
+    ],
+    "epochs": 100,
+    "patience": 5,
+    "batch_size": 32,
+    "random_state": 42,
+    "test_size": 0.2,
+    "validation_size": 0.3,
+    "threshold": 0.5,
+    "make_plots": true
+  },
+  "split_sizes": {
+    "train": 429,
+    "validation": 185,
+    "test": 154
+  },
+  "environment": {
+    "python": "3.11.9",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "packages": {
+      "tensorflow": "2.15.1",
+      "numpy": "1.26.4",
+      "pandas": "2.3.3",
+      "matplotlib": "3.11.0",
+      "scikit-learn": "1.5.2",
+      "imbalanced-learn": "0.12.4"
+    }
+  },
+  "best_by_auc": {
+    "model": "MLP 1 hidden layer (SMOTE)",
+    "model_family": "mlp",
+    "sampling": "SMOTE",
+    "hidden_layers": 1.0,
+    "epochs_run": 52.0,
+    "accuracy": 0.7662337662337663,
+    "auc_roc": 0.8338888888888888,
+    "precision_positive": 0.6323529411764706,
+    "recall_positive": 0.7962962962962963,
+    "f1_positive": 0.7049180327868853,
+    "specificity_negative": 0.75,
+    "true_negative": 75,
+    "false_positive": 25,
+    "false_negative": 11,
+    "true_positive": 43
+  }
+}
