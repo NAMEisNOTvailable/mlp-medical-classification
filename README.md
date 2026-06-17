@@ -39,6 +39,15 @@ notebooks/   Main experiment notebook
 README.md    Portfolio overview and result summary
 ```
 
+## Environment
+
+The notebook metadata records Python 3.10.9. The reproducible environment is captured in [`requirements.txt`](requirements.txt), covering TensorFlow/Keras, pandas, NumPy, Matplotlib, scikit-learn, imbalanced-learn, Jupyter, and ipykernel.
+
+```bash
+pip install -r requirements.txt
+jupyter notebook notebooks/medical_mlp_classification.ipynb
+```
+
 ## Skills Shown
 
 - Tabular machine-learning workflow
