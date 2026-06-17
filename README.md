@@ -14,7 +14,9 @@ for the diabetes-positive class.
 | Positive target | Raw LIBSVM label `-1` mapped to `diabetes_positive=1` |
 | Models | Logistic regression baseline; MLPs with 1, 3, 7, and 12 hidden layers |
 | Imbalance handling | SMOTE on the training split |
-| Best result | MLP 1 hidden layer + SMOTE, AUC-ROC 0.8339 |
+| Model selection | Validation AUC-ROC; test metrics held out for final reporting |
+| Thresholding | Per-model threshold selected on validation F1 |
+| Selected model | MLP 3 hidden layers without SMOTE; validation AUC-ROC 0.8471, test AUC-ROC 0.8113 |
 | Main command | `python scripts/run_experiment.py` |
 
 ## Method
@@ -22,36 +24,42 @@ for the diabetes-positive class.
 The experiment loads the LIBSVM dataset with sparse feature indices preserved,
 maps the minority diabetes class to the positive target, and uses stratified
 train, validation, and test splits. Feature scaling is fitted on the training
-split, and SMOTE is applied only to training data.
+split, and SMOTE is applied only to training data. The downloaded data file is
+checked against a pinned SHA-256 digest before use.
 
 The model comparison includes logistic regression as a baseline and four MLP
-depths: 1, 3, 7, and 12 hidden layers. Each model is evaluated with accuracy,
-AUC-ROC, positive-class precision, positive-class recall, F1, specificity, and
+depths: 1, 3, 7, and 12 hidden layers. Each model's decision threshold is chosen
+on validation F1, models are ranked by validation AUC-ROC, and the held-out test
+split is used for final metrics only. Each row reports accuracy, AUC-ROC,
+positive-class precision, positive-class recall, F1, specificity, and
 confusion-matrix counts.
 
 ## Results
 
 These results were generated with `python scripts/run_experiment.py`.
 
-| Model | Sampling | Accuracy | AUC-ROC | Positive recall | Positive F1 |
-| --- | --- | ---: | ---: | ---: | ---: |
-| MLP 1 hidden layer | SMOTE | 0.7662 | 0.8339 | 0.7963 | 0.7049 |
-| Logistic Regression | No SMOTE | 0.7273 | 0.8267 | 0.5185 | 0.5714 |
-| MLP 1 hidden layer | No SMOTE | 0.7338 | 0.8263 | 0.5741 | 0.6019 |
-| Logistic Regression | SMOTE | 0.7273 | 0.8230 | 0.6852 | 0.6379 |
-| MLP 3 hidden layers | No SMOTE | 0.7273 | 0.8113 | 0.5926 | 0.6038 |
-| MLP 7 hidden layers | SMOTE | 0.7208 | 0.8074 | 0.7037 | 0.6387 |
-| MLP 3 hidden layers | SMOTE | 0.7013 | 0.7917 | 0.6481 | 0.6034 |
-| MLP 7 hidden layers | No SMOTE | 0.7338 | 0.7857 | 0.6111 | 0.6168 |
-| MLP 12 hidden layers | No SMOTE | 0.7208 | 0.7800 | 0.6296 | 0.6126 |
-| MLP 12 hidden layers | SMOTE | 0.6818 | 0.7615 | 0.6111 | 0.5739 |
+| Model | Sampling | Validation AUC | Threshold | Test AUC | Test recall | Test F1 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| MLP 3 hidden layers | No SMOTE | 0.8471 | 0.3079 | 0.8113 | 0.8519 | 0.6866 |
+| MLP 1 hidden layer | SMOTE | 0.8440 | 0.4546 | 0.8339 | 0.8519 | 0.7244 |
+| MLP 1 hidden layer | No SMOTE | 0.8378 | 0.3218 | 0.8263 | 0.7593 | 0.6777 |
+| MLP 7 hidden layers | No SMOTE | 0.8298 | 0.3517 | 0.7857 | 0.6852 | 0.6325 |
+| Logistic Regression | SMOTE | 0.8281 | 0.5153 | 0.8230 | 0.6667 | 0.6316 |
+| MLP 7 hidden layers | SMOTE | 0.8248 | 0.5883 | 0.8074 | 0.6111 | 0.6000 |
+| MLP 3 hidden layers | SMOTE | 0.8245 | 0.5081 | 0.7917 | 0.6481 | 0.6034 |
+| Logistic Regression | No SMOTE | 0.8231 | 0.3281 | 0.8267 | 0.7778 | 0.7000 |
+| MLP 12 hidden layers | SMOTE | 0.8142 | 0.2347 | 0.7615 | 0.8704 | 0.6438 |
+| MLP 12 hidden layers | No SMOTE | 0.8142 | 0.3754 | 0.7800 | 0.6481 | 0.6034 |
 
 Full metrics are stored in [`results/model_comparison.csv`](results/model_comparison.csv).
 Run metadata is stored in [`results/summary.json`](results/summary.json).
+ROC and precision-recall plots are stored in [`results/`](results/).
 
-The strongest run is the 1-hidden-layer MLP with SMOTE. Logistic regression is
-close behind, which is expected for a small tabular dataset with only eight
-features. The deeper MLPs do not improve the result consistently.
+The selected run is the 3-hidden-layer MLP without SMOTE because it has the
+highest validation AUC-ROC. For audit, the 1-hidden-layer MLP with SMOTE has the
+highest held-out test AUC-ROC in this run, but the test split is not used to
+choose the model. Logistic regression remains close, which is expected for a
+small tabular dataset with only eight features.
 
 ## Reproduce
 
@@ -88,6 +96,12 @@ Run the full experiment:
 
 ```bash
 python scripts/run_experiment.py
+```
+
+To force a fixed threshold instead of validation-threshold selection:
+
+```bash
+python scripts/run_experiment.py --threshold 0.5
 ```
 
 ## Repository Structure

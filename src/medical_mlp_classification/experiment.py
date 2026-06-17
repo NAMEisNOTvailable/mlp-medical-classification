@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import platform
@@ -28,8 +29,10 @@ from sklearn.datasets import load_svmlight_file
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
+    average_precision_score,
     confusion_matrix,
     f1_score,
+    precision_recall_curve,
     precision_score,
     recall_score,
     roc_auc_score,
@@ -40,6 +43,7 @@ from sklearn.preprocessing import StandardScaler
 
 DATA_URL = "https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/diabetes_scale"
 DATA_FILENAME = "diabetes_scale"
+DATA_SHA256 = "0c07eb4c49e7a8ffb9c9f25095ac3022df2ca85b0dcb7d294c3ddea69f392cba"
 TARGET_NAME = "diabetes_positive"
 FEATURE_NAMES = [
     "num_pregnant",
@@ -59,6 +63,18 @@ ENVIRONMENT_PACKAGES = [
     "scikit-learn",
     "imbalanced-learn",
 ]
+METRIC_FIELDS = [
+    "accuracy",
+    "auc_roc",
+    "precision_positive",
+    "recall_positive",
+    "f1_positive",
+    "specificity_negative",
+    "true_negative",
+    "false_positive",
+    "false_negative",
+    "true_positive",
+]
 
 
 @dataclass(frozen=True)
@@ -72,7 +88,8 @@ class ExperimentConfig:
     random_state: int = 42
     test_size: float = 0.20
     validation_size: float = 0.30
-    threshold: float = 0.50
+    threshold: float | None = None
+    threshold_strategy: str = "max_f1"
     make_plots: bool = True
 
 
@@ -84,6 +101,29 @@ class DatasetMetadata:
     target_counts: dict[str, int]
     positive_label_mapping: str
     data_url: str
+    data_sha256: str
+
+
+def file_sha256(path: Path) -> str:
+    """Return the SHA-256 digest for a file without loading it all at once."""
+
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def verify_data_file(data_path: Path) -> None:
+    """Fail fast when the external dataset no longer matches the reviewed copy."""
+
+    actual = file_sha256(data_path)
+    if actual != DATA_SHA256:
+        raise ValueError(
+            f"Unexpected SHA-256 for {data_path}: {actual}. "
+            f"Expected {DATA_SHA256}. Delete the file and rerun only after "
+            "confirming the upstream dataset is still the intended source."
+        )
 
 
 def ensure_data_file(data_dir: Path, *, force_download: bool = False) -> Path:
@@ -92,6 +132,7 @@ def ensure_data_file(data_dir: Path, *, force_download: bool = False) -> Path:
     data_dir.mkdir(parents=True, exist_ok=True)
     data_path = data_dir / DATA_FILENAME
     if data_path.exists() and not force_download:
+        verify_data_file(data_path)
         return data_path
 
     request = urllib.request.Request(
@@ -100,6 +141,7 @@ def ensure_data_file(data_dir: Path, *, force_download: bool = False) -> Path:
     )
     with urllib.request.urlopen(request, timeout=30) as response:
         data_path.write_bytes(response.read())
+    verify_data_file(data_path)
     return data_path
 
 
@@ -127,6 +169,7 @@ def load_dataset(data_path: Path) -> tuple[pd.DataFrame, pd.Series, DatasetMetad
         target_counts={str(int(k)): int(v) for k, v in target_counts.items()},
         positive_label_mapping="raw LIBSVM label -1 -> diabetes_positive=1",
         data_url=DATA_URL,
+        data_sha256=file_sha256(data_path),
     )
     return X, y, metadata
 
@@ -250,6 +293,113 @@ def evaluate_predictions(
     }
 
 
+def select_threshold(
+    y_true: np.ndarray,
+    y_probability: np.ndarray,
+    *,
+    strategy: str,
+) -> float:
+    """Choose a decision threshold from validation predictions only."""
+
+    if strategy != "max_f1":
+        raise ValueError(f"Unsupported threshold strategy: {strategy}")
+
+    y_probability = np.asarray(y_probability).reshape(-1)
+    candidates = np.unique(np.concatenate(([0.0, 0.5, 1.0], y_probability)))
+
+    best_threshold = 0.5
+    best_score = (-1.0, -1.0, -1.0)
+    for threshold in candidates:
+        y_pred = (y_probability >= threshold).astype(int)
+        f1 = f1_score(y_true, y_pred, zero_division=0)
+        recall = recall_score(y_true, y_pred, zero_division=0)
+        tn, fp, _, _ = confusion_matrix(y_true, y_pred, labels=[0, 1]).ravel()
+        specificity = tn / (tn + fp) if (tn + fp) else 0.0
+        score = (f1, recall, specificity)
+        if score > best_score:
+            best_score = score
+            best_threshold = float(threshold)
+
+    return best_threshold
+
+
+def metric_values(metrics: dict[str, float | int | str | None]) -> dict[str, float | int]:
+    """Keep only numeric metric fields from an evaluation row."""
+
+    return {field: metrics[field] for field in METRIC_FIELDS}
+
+
+def evaluate_candidate(
+    *,
+    y_validation: np.ndarray,
+    validation_probability: np.ndarray,
+    y_test: np.ndarray,
+    test_probability: np.ndarray,
+    config: ExperimentConfig,
+    model_name: str,
+    model_family: str,
+    sampling: str,
+    hidden_layers: int | None = None,
+    epochs_run: int | None = None,
+) -> dict[str, float | int | str | None]:
+    """Evaluate one trained model using validation-only threshold selection."""
+
+    if config.threshold is None:
+        threshold = select_threshold(
+            y_validation,
+            validation_probability,
+            strategy=config.threshold_strategy,
+        )
+        threshold_strategy = config.threshold_strategy
+    else:
+        threshold = float(config.threshold)
+        threshold_strategy = "fixed"
+
+    validation_metrics = evaluate_predictions(
+        y_validation,
+        validation_probability,
+        threshold=threshold,
+        model_name=model_name,
+        model_family=model_family,
+        sampling=sampling,
+        hidden_layers=hidden_layers,
+        epochs_run=epochs_run,
+    )
+    test_metrics = evaluate_predictions(
+        y_test,
+        test_probability,
+        threshold=threshold,
+        model_name=model_name,
+        model_family=model_family,
+        sampling=sampling,
+        hidden_layers=hidden_layers,
+        epochs_run=epochs_run,
+    )
+
+    row: dict[str, float | int | str | None] = {
+        "model": model_name,
+        "model_family": model_family,
+        "sampling": sampling,
+        "hidden_layers": hidden_layers,
+        "epochs_run": epochs_run,
+        "selection_threshold": threshold,
+        "threshold_strategy": threshold_strategy,
+    }
+    row.update(
+        {
+            f"validation_{key}": value
+            for key, value in metric_values(validation_metrics).items()
+        }
+    )
+    row.update(
+        {f"test_{key}": value for key, value in metric_values(test_metrics).items()}
+    )
+
+    # Backward-compatible aliases: these are final test metrics.
+    row.update(metric_values(test_metrics))
+    return row
+
+
 def run_baselines(
     splits: dict[str, np.ndarray],
     config: ExperimentConfig,
@@ -269,14 +419,17 @@ def run_baselines(
         )
         model = LogisticRegression(max_iter=1000, random_state=config.random_state)
         model.fit(X_train, y_train)
-        proba = model.predict_proba(splits["X_test"])[:, 1]
+        validation_proba = model.predict_proba(splits["X_val"])[:, 1]
+        test_proba = model.predict_proba(splits["X_test"])[:, 1]
         name = f"Logistic Regression ({sampling})"
-        probabilities[name] = proba
+        probabilities[name] = test_proba
         rows.append(
-            evaluate_predictions(
-                splits["y_test"],
-                proba,
-                threshold=config.threshold,
+            evaluate_candidate(
+                y_validation=splits["y_val"],
+                validation_probability=validation_proba,
+                y_test=splits["y_test"],
+                test_probability=test_proba,
+                config=config,
                 model_name=name,
                 model_family="baseline",
                 sampling=sampling,
@@ -323,14 +476,17 @@ def run_mlp_models(
                 callbacks=[early_stopping],
                 verbose=0,
             )
-            proba = model.predict(splits["X_test"], verbose=0).reshape(-1)
+            validation_proba = model.predict(splits["X_val"], verbose=0).reshape(-1)
+            test_proba = model.predict(splits["X_test"], verbose=0).reshape(-1)
             name = f"MLP {hidden_layers} hidden layer{'s' if hidden_layers != 1 else ''} ({sampling})"
-            probabilities[name] = proba
+            probabilities[name] = test_proba
             rows.append(
-                evaluate_predictions(
-                    splits["y_test"],
-                    proba,
-                    threshold=config.threshold,
+                evaluate_candidate(
+                    y_validation=splits["y_val"],
+                    validation_probability=validation_proba,
+                    y_test=splits["y_test"],
+                    test_probability=test_proba,
+                    config=config,
                     model_name=name,
                     model_family="mlp",
                     sampling=sampling,
@@ -351,16 +507,16 @@ def save_plots(
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    ordered = results.sort_values("auc_roc", ascending=True)
+    ordered = results.sort_values("validation_auc_roc", ascending=True)
     labels = ordered["model"].tolist()
     y_pos = np.arange(len(labels))
 
     fig, ax = plt.subplots(figsize=(9, 5))
-    ax.barh(y_pos, ordered["auc_roc"], color="#2f6f73")
+    ax.barh(y_pos, ordered["validation_auc_roc"], color="#2f6f73")
     ax.set_yticks(y_pos, labels)
     ax.set_xlim(0.5, 1.0)
-    ax.set_xlabel("AUC-ROC")
-    ax.set_title("Model comparison by AUC-ROC")
+    ax.set_xlabel("Validation AUC-ROC")
+    ax.set_title("Model selection by validation AUC-ROC")
     fig.tight_layout()
     fig.savefig(output_dir / "auc_comparison.png", dpi=160)
     plt.close(fig)
@@ -377,6 +533,24 @@ def save_plots(
     ax.legend(fontsize=7, loc="lower right")
     fig.tight_layout()
     fig.savefig(output_dir / "roc_curves.png", dpi=160)
+    plt.close(fig)
+
+    fig, ax = plt.subplots(figsize=(7, 6))
+    for name, proba in probabilities.items():
+        precision, recall, _ = precision_recall_curve(y_test, proba)
+        average_precision = average_precision_score(y_test, proba)
+        ax.plot(
+            recall,
+            precision,
+            label=f"{name} (AP {average_precision:.3f})",
+            linewidth=1.4,
+        )
+    ax.set_xlabel("Recall")
+    ax.set_ylabel("Precision")
+    ax.set_title("Precision-recall curves")
+    ax.legend(fontsize=7, loc="lower left")
+    fig.tight_layout()
+    fig.savefig(output_dir / "precision_recall_curves.png", dpi=160)
     plt.close(fig)
 
 
@@ -408,12 +582,18 @@ def run_experiment(config: ExperimentConfig, *, force_download: bool = False) ->
     mlp_rows, mlp_probabilities = run_mlp_models(splits, config)
 
     results = pd.DataFrame([*baseline_rows, *mlp_rows]).sort_values(
-        ["auc_roc", "accuracy"],
-        ascending=[False, False],
+        ["validation_auc_roc", "validation_f1_positive", "test_auc_roc"],
+        ascending=[False, False, False],
     )
 
     config.output_dir.mkdir(parents=True, exist_ok=True)
     results.to_csv(config.output_dir / "model_comparison.csv", index=False)
+
+    selected_by_validation = results.iloc[0].to_dict()
+    best_by_test = results.sort_values(
+        ["test_auc_roc", "test_accuracy"],
+        ascending=[False, False],
+    ).iloc[0].to_dict()
 
     summary = {
         "dataset": asdict(metadata),
@@ -429,7 +609,13 @@ def run_experiment(config: ExperimentConfig, *, force_download: bool = False) ->
             "test": int(len(splits["y_test"])),
         },
         "environment": collect_environment(),
-        "best_by_auc": results.iloc[0].to_dict(),
+        "model_selection": {
+            "selection_split": "validation",
+            "selection_metric": "validation_auc_roc",
+            "threshold_strategy": config.threshold_strategy if config.threshold is None else "fixed",
+        },
+        "selected_by_validation_auc": selected_by_validation,
+        "best_by_test_auc_for_audit": best_by_test,
     }
     (config.output_dir / "summary.json").write_text(
         json.dumps(summary, indent=2),
@@ -456,7 +642,18 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--patience", type=int, default=5)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--threshold", type=float, default=0.5)
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=None,
+        help="Use a fixed decision threshold. Omit to select the threshold on validation F1.",
+    )
+    parser.add_argument(
+        "--threshold-strategy",
+        choices=["max_f1"],
+        default="max_f1",
+        help="Validation-only threshold strategy used when --threshold is omitted.",
+    )
     parser.add_argument("--force-download", action="store_true")
     parser.add_argument("--no-plots", action="store_true")
     parser.add_argument(
@@ -486,14 +683,15 @@ def main(argv: Iterable[str] | None = None) -> int:
         batch_size=args.batch_size,
         random_state=args.seed,
         threshold=args.threshold,
+        threshold_strategy=args.threshold_strategy,
         make_plots=not args.no_plots,
     )
     results = run_experiment(config, force_download=args.force_download)
     display_columns = [
         "model",
-        "accuracy",
+        "validation_auc_roc",
+        "selection_threshold",
         "auc_roc",
-        "precision_positive",
         "recall_positive",
         "f1_positive",
         "false_negative",
