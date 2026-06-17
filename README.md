@@ -128,10 +128,10 @@ jupyter notebook notebooks/medical_mlp_classification.ipynb
 
 ## Background
 
-This repository is based on a university deep-learning assignment. The project
-version here keeps the original comparison of MLP depths and SMOTE, while using
-a reproducible script-based workflow and the LIBSVM label mapping documented in
-the dataset notes.
+This repository is based on a deep-learning assignment from the University of
+Adelaide. The project version here keeps the original comparison of MLP depths
+and SMOTE, while using a reproducible script-based workflow and the LIBSVM label
+mapping documented in the dataset notes.
 
 ## Limitations
 
