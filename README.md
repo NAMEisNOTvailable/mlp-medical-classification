@@ -1,5 +1,10 @@
 # Medical MLP Classification
 
+[![Smoke tests](https://github.com/NAMEisNOTvailable/mlp-medical-classification/actions/workflows/smoke.yml/badge.svg)](https://github.com/NAMEisNOTvailable/mlp-medical-classification/actions/workflows/smoke.yml)
+![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11-blue)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-MLP%20classification-ff6f00)
+![License](https://img.shields.io/badge/License-MIT-green)
+
 This project explores diabetes classification on the scaled Pima Indians
 Diabetes dataset. It compares logistic regression with multilayer perceptrons
 of different depths, then measures how SMOTE changes recall, F1, and AUC-ROC
@@ -18,7 +23,10 @@ for the diabetes-positive class.
 | Thresholding | Per-model threshold selected on validation F1 |
 | Single-split selected model | MLP 3 hidden layers without SMOTE; validation AUC-ROC 0.8471, test AUC-ROC 0.8113 |
 | Python | 3.10 or 3.11; `.python-version` pins 3.11.9 for local reproduction |
+| Main artifacts | [`notebooks/medical_mlp_classification.ipynb`](notebooks/medical_mlp_classification.ipynb), [`src/medical_mlp_classification`](src/medical_mlp_classification), [`results`](results), [`docs/portfolio_summary.md`](docs/portfolio_summary.md) |
 | Main command | `python scripts/run_experiment.py` or `medical-mlp-classification` |
+
+![Model selection overview](assets/model_selection_overview.png)
 
 ## Method
 
@@ -62,6 +70,17 @@ audit, the 1-hidden-layer MLP with SMOTE has the highest held-out test AUC-ROC
 in this run, but the test split is not used to choose the model. Logistic
 regression remains close, which is expected for a small tabular dataset with
 only eight features.
+
+## Reviewer Guide
+
+| What to inspect | Where |
+| --- | --- |
+| Executed notebook report view | [`notebooks/medical_mlp_classification.ipynb`](notebooks/medical_mlp_classification.ipynb) |
+| Reusable experiment workflow | [`src/medical_mlp_classification/experiment.py`](src/medical_mlp_classification/experiment.py) |
+| Validation-selected metrics and run metadata | [`results/model_comparison.csv`](results/model_comparison.csv), [`results/summary.json`](results/summary.json) |
+| Result plots | [`results/auc_comparison.png`](results/auc_comparison.png), [`results/roc_curves.png`](results/roc_curves.png), [`results/precision_recall_curves.png`](results/precision_recall_curves.png) |
+| Reproducibility checks | [`tests`](tests), [`.github/workflows/smoke.yml`](.github/workflows/smoke.yml) |
+| Portfolio positioning and caveats | [`docs/portfolio_summary.md`](docs/portfolio_summary.md) |
 
 ## Reproduce
 
@@ -124,14 +143,22 @@ To force a fixed threshold instead of validation-threshold selection:
 python scripts/run_experiment.py --threshold 0.5
 ```
 
+Regenerate the README result chart:
+
+```bash
+python scripts/generate_result_assets.py
+```
+
 ## Repository Structure
 
 ```text
+assets/                       Generated README display chart
 data/                         Data source note; downloaded raw data is ignored
+docs/                         Experiment and portfolio notes
 notebooks/                    Notebook-facing report entry point
 pyproject.toml                Package metadata and dependency ranges
 results/                      Reproduced metrics and plots
-scripts/run_experiment.py     CLI entry point
+scripts/                      CLI and result-asset generation scripts
 src/medical_mlp_classification/
                               Reusable experiment code
 tests/                        Data-loading regression tests

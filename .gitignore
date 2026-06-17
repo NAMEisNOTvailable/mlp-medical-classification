@@ -17,6 +17,7 @@ venv/
 # Downloaded external data
 data/diabetes_scale
 results/smoke/
+results/smoke*/
 
 # OS/editor noise
 .DS_Store
