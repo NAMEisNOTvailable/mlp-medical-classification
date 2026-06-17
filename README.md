@@ -17,7 +17,8 @@ for the diabetes-positive class.
 | Model selection | Validation AUC-ROC; test metrics held out for final reporting |
 | Thresholding | Per-model threshold selected on validation F1 |
 | Single-split selected model | MLP 3 hidden layers without SMOTE; validation AUC-ROC 0.8471, test AUC-ROC 0.8113 |
-| Main command | `python scripts/run_experiment.py` |
+| Python | 3.10 or 3.11; `.python-version` pins 3.11.9 for local reproduction |
+| Main command | `python scripts/run_experiment.py` or `medical-mlp-classification` |
 
 ## Method
 
@@ -64,19 +65,31 @@ only eight features.
 
 ## Reproduce
 
-Install the core experiment dependencies:
+Use Python 3.10 or 3.11. The committed `.python-version` records Python 3.11.9,
+which is the local Windows CPU environment used to verify the committed result
+set.
+
+Install the package and development test dependency in editable mode:
 
 ```bash
 python -m venv .venv
 .\.venv\Scripts\python -m pip install --upgrade pip
+.\.venv\Scripts\python -m pip install -e ".[dev]"
+```
+
+`requirements.txt` is kept as a compatibility wrapper for the same editable
+development install:
+
+```bash
 .\.venv\Scripts\python -m pip install -r requirements.txt
 ```
 
 For the exact Windows CPU environment used to verify the committed results, use
-the lock file:
+the lock file, then install the local package without reinstalling dependencies:
 
 ```bash
 .\.venv\Scripts\python -m pip install -r requirements-lock.txt
+.\.venv\Scripts\python -m pip install -e . --no-deps
 ```
 
 If Windows reports a TensorFlow long-path installation error, create the virtual
@@ -99,6 +112,12 @@ Run the full experiment:
 python scripts/run_experiment.py
 ```
 
+The editable install also exposes a console command:
+
+```bash
+medical-mlp-classification
+```
+
 To force a fixed threshold instead of validation-threshold selection:
 
 ```bash
@@ -110,6 +129,7 @@ python scripts/run_experiment.py --threshold 0.5
 ```text
 data/                         Data source note; downloaded raw data is ignored
 notebooks/                    Notebook-facing report entry point
+pyproject.toml                Package metadata and dependency ranges
 results/                      Reproduced metrics and plots
 scripts/run_experiment.py     CLI entry point
 src/medical_mlp_classification/
@@ -123,7 +143,7 @@ The notebook is a compact report view for the generated results. Install the
 optional notebook dependencies only when opening it interactively:
 
 ```bash
-python -m pip install -r requirements-notebook.txt
+python -m pip install -e ".[notebook]"
 jupyter notebook notebooks/medical_mlp_classification.ipynb
 ```
 
