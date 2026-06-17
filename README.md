@@ -23,7 +23,7 @@ for the diabetes-positive class.
 | Thresholding | Per-model threshold selected on validation F1 |
 | Single-split selected model | MLP 3 hidden layers without SMOTE; validation AUC-ROC 0.8471, test AUC-ROC 0.8113 |
 | Python | 3.10 or 3.11; `.python-version` pins 3.11.9 for local reproduction |
-| Main artifacts | [`notebooks/medical_mlp_classification.ipynb`](notebooks/medical_mlp_classification.ipynb), [`src/medical_mlp_classification`](src/medical_mlp_classification), [`results`](results), [`docs/portfolio_summary.md`](docs/portfolio_summary.md) |
+| Main artifacts | [`notebooks/medical_mlp_classification.ipynb`](notebooks/medical_mlp_classification.ipynb), [`src/medical_mlp_classification`](src/medical_mlp_classification), [`results`](results) |
 | Main command | `python scripts/run_experiment.py` or `medical-mlp-classification` |
 
 ![Model selection overview](assets/model_selection_overview.png)
@@ -80,7 +80,6 @@ only eight features.
 | Validation-selected metrics and run metadata | [`results/model_comparison.csv`](results/model_comparison.csv), [`results/summary.json`](results/summary.json) |
 | Result plots | [`results/auc_comparison.png`](results/auc_comparison.png), [`results/roc_curves.png`](results/roc_curves.png), [`results/precision_recall_curves.png`](results/precision_recall_curves.png) |
 | Reproducibility checks | [`tests`](tests), [`.github/workflows/smoke.yml`](.github/workflows/smoke.yml) |
-| Portfolio positioning and caveats | [`docs/portfolio_summary.md`](docs/portfolio_summary.md) |
 
 ## Reproduce
 
@@ -154,7 +153,7 @@ python scripts/generate_result_assets.py
 ```text
 assets/                       Generated README display chart
 data/                         Data source note; downloaded raw data is ignored
-docs/                         Experiment and portfolio notes
+docs/                         Experiment notes
 notebooks/                    Notebook-facing report entry point
 pyproject.toml                Package metadata and dependency ranges
 results/                      Reproduced metrics and plots

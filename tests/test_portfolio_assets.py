@@ -6,7 +6,6 @@ def test_readme_links_portfolio_assets():
 
     expected_paths = [
         "assets/model_selection_overview.png",
-        "docs/portfolio_summary.md",
         "results/model_comparison.csv",
         "results/summary.json",
         "results/auc_comparison.png",
