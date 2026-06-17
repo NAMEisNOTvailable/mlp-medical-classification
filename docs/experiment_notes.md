@@ -29,10 +29,10 @@ This note records the main data and modelling choices behind the project.
 
 ## Result Summary
 
-The validation-selected run in the committed result set is
-`MLP 3 hidden layers (No SMOTE)` with validation AUC-ROC `0.8471`. Its held-out
-test metrics are AUC-ROC `0.8113`, positive recall `0.8519`, and positive F1
-`0.6866`.
+The single-split validation-selected run in the committed result set is
+`MLP 3 hidden layers (No SMOTE)` with validation AUC-ROC `0.8471` for this
+train/validation/test split. Its held-out test metrics are AUC-ROC `0.8113`,
+positive recall `0.8519`, and positive F1 `0.6866`.
 
 For audit, `MLP 1 hidden layer (SMOTE)` has the highest test AUC-ROC in this
 run at `0.8339`, but it is not treated as the selected model because model

@@ -16,7 +16,7 @@ for the diabetes-positive class.
 | Imbalance handling | SMOTE on the training split |
 | Model selection | Validation AUC-ROC; test metrics held out for final reporting |
 | Thresholding | Per-model threshold selected on validation F1 |
-| Selected model | MLP 3 hidden layers without SMOTE; validation AUC-ROC 0.8471, test AUC-ROC 0.8113 |
+| Single-split selected model | MLP 3 hidden layers without SMOTE; validation AUC-ROC 0.8471, test AUC-ROC 0.8113 |
 | Main command | `python scripts/run_experiment.py` |
 
 ## Method
@@ -55,11 +55,12 @@ Full metrics are stored in [`results/model_comparison.csv`](results/model_compar
 Run metadata is stored in [`results/summary.json`](results/summary.json).
 ROC and precision-recall plots are stored in [`results/`](results/).
 
-The selected run is the 3-hidden-layer MLP without SMOTE because it has the
-highest validation AUC-ROC. For audit, the 1-hidden-layer MLP with SMOTE has the
-highest held-out test AUC-ROC in this run, but the test split is not used to
-choose the model. Logistic regression remains close, which is expected for a
-small tabular dataset with only eight features.
+The single-split selected run is the 3-hidden-layer MLP without SMOTE because it
+has the highest validation AUC-ROC for this train/validation/test split. For
+audit, the 1-hidden-layer MLP with SMOTE has the highest held-out test AUC-ROC
+in this run, but the test split is not used to choose the model. Logistic
+regression remains close, which is expected for a small tabular dataset with
+only eight features.
 
 ## Reproduce
 
