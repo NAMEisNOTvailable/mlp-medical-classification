@@ -25,7 +25,7 @@ This note records the main data and modelling choices behind the project.
 - Each model's decision threshold is selected on validation F1, then applied to
   the held-out test split.
 - Models are selected by validation AUC-ROC. Test metrics are reported after
-  selection rather than used to choose the model.
+  validation-based selection.
 
 ## Result Summary
 
@@ -34,8 +34,8 @@ The single-split validation-selected run in the committed result set is
 train/validation/test split. Its held-out test metrics are AUC-ROC `0.8113`,
 positive recall `0.8519`, and positive F1 `0.6866`.
 
-For audit, `MLP 1 hidden layer (SMOTE)` has the highest test AUC-ROC in this
-run at `0.8339`, but it is not treated as the selected model because model
-selection is based on validation results. The logistic-regression baseline is
-close to the best MLP result, which is a useful signal for this small tabular
-dataset. The deeper MLPs do not improve the test metrics consistently.
+For comparison, `MLP 1 hidden layer (SMOTE)` has the highest test AUC-ROC in
+this run at `0.8339`; the selected model remains the validation-AUC leader.
+The logistic-regression baseline is close to the best MLP result, which is a
+useful signal for this small tabular dataset. The deeper MLPs show limited
+test-metric gains in this split.

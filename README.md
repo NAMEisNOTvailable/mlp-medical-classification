@@ -67,11 +67,11 @@ ROC and precision-recall plots are stored in [`results/`](results/).
 The single-split selected run is the 3-hidden-layer MLP without SMOTE because it
 has the highest validation AUC-ROC for this train/validation/test split. For
 audit, the 1-hidden-layer MLP with SMOTE has the highest held-out test AUC-ROC
-in this run, but the test split is not used to choose the model. Logistic
+in this run; model selection is still based on validation results. Logistic
 regression remains close, which is expected for a small tabular dataset with
 only eight features.
 
-## Reviewer Guide
+## Project Notes
 
 | What to inspect | Where |
 | --- | --- |
@@ -182,10 +182,9 @@ mapping documented in the dataset notes.
 
 ## Limitations
 
-This is a small academic experiment, not a clinical model. The Pima dataset is
-demographically narrow and does not provide the evidence needed for medical
-deployment. The value of this project is the preprocessing, class-imbalance
-handling, model comparison, and evaluation workflow.
+This is a small academic experiment on a demographically narrow public dataset.
+The value of this project is the preprocessing, class-imbalance handling,
+model comparison, validation-based selection, and evaluation workflow.
 
 ## License and Data
 
