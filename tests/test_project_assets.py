@@ -1,7 +1,7 @@
 from pathlib import Path
 
 
-def test_readme_links_portfolio_assets():
+def test_readme_links_project_assets():
     readme = Path("README.md").read_text(encoding="utf-8")
 
     expected_paths = [

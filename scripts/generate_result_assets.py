@@ -102,7 +102,7 @@ def generate_overview_chart(summary_path: Path, metrics_path: Path, output_path:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Generate portfolio result assets.")
+    parser = argparse.ArgumentParser(description="Generate project result assets.")
     parser.add_argument("--summary", type=Path, default=Path("results/summary.json"))
     parser.add_argument("--metrics", type=Path, default=Path("results/model_comparison.csv"))
     parser.add_argument("--output", type=Path, default=Path("assets/model_selection_overview.png"))

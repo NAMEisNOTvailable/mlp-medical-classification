@@ -6,8 +6,8 @@ Generated experiment outputs are written here by:
 python scripts/run_experiment.py
 ```
 
-The committed CSV and JSON files are small portfolio artifacts for inspecting
-the reproduced metrics without rerunning TensorFlow immediately.
+The committed CSV and JSON files are small review artifacts for inspecting the
+reproduced metrics without rerunning TensorFlow immediately.
 
 `model_comparison.csv` is sorted by validation AUC-ROC. The unprefixed metric
 columns are final held-out test metrics kept for backwards-readable summaries;

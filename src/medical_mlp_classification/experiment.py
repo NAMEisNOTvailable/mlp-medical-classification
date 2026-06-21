@@ -239,7 +239,7 @@ def set_reproducible_seed(seed: int) -> None:
 
 
 def build_mlp(input_dim: int, hidden_layers: int, learning_rate: float = 0.001):
-    """Build the original assignment architecture with a configurable depth."""
+    """Build the MLP architecture with a configurable depth."""
 
     import tensorflow as tf
 
@@ -503,7 +503,7 @@ def save_plots(
     y_test: np.ndarray,
     output_dir: Path,
 ) -> None:
-    """Write compact comparison plots for portfolio review."""
+    """Write compact comparison plots for project review."""
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
